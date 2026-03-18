@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICE, SALT & NOISE</title>
+    <style>
+        /* 세련된 고딕 폰트 적용 */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+
+        /* === 1. 맑고 청량한 배경 & 그리드 === */
+        body, html {
+            margin: 0; padding: 0; 
+            font-family: 'Noto Sans KR', sans-serif;
+            color: #ffffff;
+            background-image: url('1.png'); 
+            background-size: cover; background-position: center; 
+            background-attachment: fixed; background-repeat: no-repeat;
+            
+            background-color: #8cb3d9; 
+            box-shadow: inset 0 0 0 2000px rgba(40, 80, 120, 0.4); 
+            scroll-behavior: smooth;
+        }
+
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+            background-size: 50px 50px; 
+            z-index: -1; pointer-events: none;
+        }
+
+        .page-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; }
+
+        /* === 2. 상단 띠 (메뉴바) === */
+        .top-nav-bar {
+            position: fixed; top: 0; left: 0; width: 100%; height: 45px;
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 40px; box-sizing: border-box; z-index: 100;
+            font-size: 11px; font-weight: 700; letter-spacing: 4px; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        /* === 3. 영상 영역 (유튜브 임베드 최적화) === */
+        .video-section {
+            width: 100%; min-height: 100vh; 
+            display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
+            position: relative; padding-top: calc(45px + 6vh); box-sizing: border-box;
+        }
+
+        .video-frame-wrapper {
+            width: 90%; max-width: 1200px; position: relative; padding: 20px; 
+            background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3); border-radius: 8px; backdrop-filter: blur(5px);
+        }
+
+        .video-frame-wrapper::before, .video-frame-wrapper::after {
+            content: ''; position: absolute; width: 30px; height: 30px;
+            border: 2px solid #fff; opacity: 0.9; pointer-events: none; 
+        }
+        .video-frame-wrapper::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+        .video-frame-wrapper::after { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
+        .frame-label {
+            position: absolute; top: -14px; left: 40px; background: #fff; color: #1a365d;
+            padding: 4px 12px; font-size: 11px; font-weight: 900; letter-spacing: 1px; border-radius: 2px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        /* 🔥 유튜브 플레이어를 16:9 비율로 꽉 채우기 위한 설정 🔥 */
+        .video-showcase {
+            width: 100%; position: relative; overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5); background: #000; border-radius: 4px;
+            aspect-ratio: 16 / 9; /* 16:9 비율 고정 */
+        }
+
+        .video-showcase iframe {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;
+        }
+
+        .future-sticker { position: absolute; width: 150px; height: 150px; background-size: contain; background-repeat: no-repeat; z-index: 20; pointer-events: none; }
+        .sticker-1 { top: -50px; right: -50px; transform: rotate(15deg); }
+        .sticker-2 { bottom: -30px; left: -60px; transform: rotate(-10deg); }
+
+        .scroll-down {
+            position: absolute; bottom: 30px; font-size: 11px; font-weight: 700; letter-spacing: 4px;
+            color: rgba(255,255,255,0.8); animation: bounce 2s infinite; text-align: center; text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } 60% { transform: translateY(-5px); } }
+
+        /* === 4. 프로필 영역 === */
+        .profile-container { width: 90%; max-width: 1100px; background: transparent; padding: 0 0 100px 0; }
+
+        .tab-menu { display: flex; gap: 40px; margin-bottom: 60px; border-bottom: 1px solid rgba(255, 255, 255, 0.3); padding-bottom: 10px; }
+        .tab-btn { 
+            background: none; border: none; color: rgba(255, 255, 255, 0.6); 
+            font-size: 14px; font-weight: 700; cursor: pointer; padding: 0 0 10px 0; 
+            transition: all 0.3s ease; letter-spacing: 2px; position: relative; top: 11px; text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+        .tab-btn:hover { color: #fff; }
+        .tab-btn.active { color: #fff; border-bottom: 3px solid #fff; }
+
+        .profile-content { display: none; position: relative; }
+        .profile-content.active { display: block; }
+        
+        .profile-layout { display: flex; gap: 50px; flex-wrap: wrap; z-index: 1; position: relative; align-items: flex-start;}
+        
+        .left-column {
+            flex: 0 0 320px;
+            display: flex;
+            flex-direction: column; 
+            gap: 40px; 
+        }
+
+        .profile-image { position: relative; display: flex; flex-direction: column; align-items: center; gap: 20px;} 
+        .profile-image img.main-char { width: 100%; height: auto; border-radius: 8px; box-shadow: 0 15px 35px rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.5); cursor: pointer; transition: transform 0.3s; z-index: 1; position: relative; }
+        .profile-image img.main-char:hover { transform: scale(1.02); }
+
+        .profile-sticker { position: absolute; z-index: 10; pointer-events: none; }
+        .profile-sticker img { width: auto; max-width: 150px; height: auto; display: block; }
+        
+        /* 우측 하단 소형 스티커 설정 */
+        .sticker-br { bottom: -50px; right: -50px; }
+        .sticker-br img { transform: rotate(10deg); }
+
+        /* 하단 대형 스티커 설정 */
+        .large-bottom-sticker {
+            width: 100%; 
+            display: flex;
+            justify-content: center;
+        }
+        .large-bottom-sticker img {
+            width: 100%; 
+            height: auto;
+            display: block;
+            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.4));
+        }
+
+        /* 님이 조절하신 커스텀 위치 유지 */
+        #char1 .large-bottom-sticker img {
+            width: 100%;
+            transform: translate(0px, 210px);
+        }
+        
+        #char2 .large-bottom-sticker img {
+            width: 90%;
+            transform: translate(0px, 290px);
+        }
+        
+        #char3 .large-bottom-sticker img {
+            width: 110%;
+            transform: translate(-10px, 300px);
+        }
+
+        .profile-info { flex: 1; min-width: 300px; }
+        
+        .main-name { font-size: 45px; font-weight: 900; letter-spacing: 5px; color: #fff; margin: 0 0 10px 0; text-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        .quote { margin: 0 0 40px 0; font-size: 16px; font-style: italic; color: #e6f2ff; letter-spacing: 1px; font-weight: 400; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+
+        .profile-section-block { margin-bottom: 40px; }
+        
+        .section-title { font-size: 12px; color: #fff; font-weight: 700; letter-spacing: 3px; display: flex; align-items: center; margin-bottom: 15px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .section-title::before { content: ''; display: inline-block; width: 25px; height: 2px; background: #fff; margin-right: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+
+        .transparent-box {
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.3); padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); border-radius: 8px;
+        }
+
+        .text-content { font-size: 15px; color: #fff; line-height: 1.8; font-weight: 400; letter-spacing: 0.5px; text-align: justify; text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
+        
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+        .info-item { display: flex; flex-direction: column; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 15px; }
+        .info-label { font-size: 11px; color: #cce0ff; font-weight: 700; letter-spacing: 2px; margin-bottom: 8px; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+        .info-value { font-size: 15px; color: #fff; font-weight: 500; line-height: 1.4; text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
+
+        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px); justify-content: center; align-items: center; }
+        .modal-content { max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 0 50px rgba(0,0,0,0.5); animation: zoomIn 0.3s ease; border: 2px solid #fff; }
+        @keyframes zoomIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .close-btn { position: absolute; top: 30px; right: 40px; color: white; font-size: 40px; font-weight: 300; cursor: pointer; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.5); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.8); }
+    </style>
+</head>
+<body>
+
+<div class="top-nav-bar">
+    <span>▶ ICE, SALT & NOISE</span>
+    <span>CHARACTER ARCHIVE ▮▮</span>
+</div>
+
+<div class="page-wrapper">
+
+    <div class="video-section">
+        <div class="video-frame-wrapper">
+            <div class="frame-label">SYS. PLAYBACK</div>
+            <div class="future-sticker sticker-1"></div>
+            <div class="future-sticker sticker-2"></div>
+
+            <div class="video-showcase" id="videoContainer">
+                <iframe src="https://www.youtube.com/embed/XNg-2pQ2UH8?rel=0" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+            </div>
+        </div>
+        <div class="scroll-down">SCROLL DOWN ▼</div>
+    </div>
+
+    <div class="profile-container">
+        
+        <div class="tab-menu">
+            <button class="tab-btn active" onclick="showProfile('char1', event)">ROWAN BECK</button>
+            <button class="tab-btn" onclick="showProfile('char2', event)">HALE YEON</button>
+            <button class="tab-btn" onclick="showProfile('char3', event)">REECE WOLF</button>
+        </div>
+
+        <div id="char1" class="profile-content active">
+            <div class="profile-layout">
+                
+                <div class="left-column">
+                    <div class="profile-image">
+                        <img src="RO.webp" alt="로언 벡" class="main-char" onclick="openModal(this.src)">
+                        <div class="profile-sticker sticker-br"><img src="RO2.png" alt="로언 소형 스티커 2"></div>
+                    </div>
+                    
+                    <div class="large-bottom-sticker">
+                        <img src="RO1.png" alt="로언 대형 스티커 1">
+                    </div>
+                </div>
+                
+                <div class="profile-info">
+                    <h1 class="main-name">로언 벡 (Rowan Beck)</h1>
+                    <div class="quote">"햇빛과 바닷물, 여름의 눈부심을 닮은 사람."</div>
+                    
+                    <div class="profile-section-block">
+                        <div class="section-title">INTRODUCTION</div>
+                        <div class="transparent-box text-content">
+                            여름은 늘 눈부셔서, 그 안에 가라앉아 있는 것들을 잘 보이지 않게 만든다. 로언 벡은 꼭 그런 계절을 닮아 있다. 한때 물 위에서 가장 선명하게 빛나던 수영 유망주였지만, 사고 이후 더는 예전의 자리로 돌아갈 수 없게 되었다. 그럼에도 완전히 물을 떠나지는 못한 채, 지금은 라이프가드로 바다 곁에 남아 있다. 밝고 가벼운 웃음 아래에는 아직 가라앉지 못한 상실이 조용히 잠겨 있다.
+                        </div>
+                    </div>
+
+                    <div class="profile-section-block">
+                        <div class="section-title">FILE · INFO</div>
+                        <div class="transparent-box info-grid">
+                            <div class="info-item"><span class="info-label">AGE / MAJOR</span><span class="info-value">23세 / 운동역학</span></div>
+                            <div class="info-item"><span class="info-label">JOB</span><span class="info-value">라이프가드</span></div>
+                            <div class="info-item"><span class="info-label">HEIGHT / WEIGHT</span><span class="info-value">191cm / 81kg</span></div>
+                            <div class="info-item"><span class="info-label">EYES</span><span class="info-value">금안</span></div>
+                            <div class="info-item"><span class="info-label">FEATURE</span><span class="info-value">라이트 코퍼 브라운 헤어</span></div>
+                            <div class="info-item"><span class="info-label">TATTOO</span><span class="info-value">목의 닻(정착을 의미), 팔의 물고기(삶을 의미)</span></div>
+                        </div>
+                    </div>
+
+                    <div class="profile-section-block">
+                        <div class="section-title">NARRATIVE</div>
+                        <div class="transparent-box text-content">
+                            한때 로언은 정말로 물속에서 가장 눈부시게 빛나던 사람이었다. 유소년 시절부터 그의 기록은 늘 이름보다 먼저 도착했고, 더 멀리, 더 높이 나아갈 수 있으리라는 기대 또한 너무도 자연스럽게 뒤따랐다. 물은 로언에게 단순한 배경이나 경기장이 아니었다. 그곳은 가장 선명한 형태의 자기 자신으로 존재할 수 있는 자리였다. 숨을 삼키고 몸을 밀어 넣는 순간, 복잡하던 세계는 믿을 수 없을 만큼 단순해졌고, 그는 그 안에서 누구보다 분명해졌다. 그러므로 그것이 끝났을 때 무너진 것은 단순한 진로 하나가 아니었다. 로언 벡이라는 사람을 지탱해 오던 가장 단단하고도 맑은 축이, 소리 없이 꺾여 나간 것에 가까웠다.<br><br>
+                            사고 이후 그에게 남겨진 것은 예전 같지 않은 무릎과, 다시는 돌아갈 수 없다는 사실, 그리고 물 앞에 서서조차 예전처럼 자연스럽게 숨 쉬지 못하는 낯선 자신이었다. 사람들은 시간이 흐르면 모든 것이 조금씩 괜찮아질 거라고 쉽게 말했다. 그러나 어떤 상실은 회복된다기보다, 오래도록 바닥에 가라앉아 형태를 바꾼 채 남는 법이었다. 로언은 여전히 잘 웃었고, 여전히 가벼운 얼굴로 사람들 사이를 떠다녔다. 하지만 진심에 가까운 순간일수록 그는 이상하리만치 더 능청스러워졌다. 상처를 감추는 법을 배운 사람들처럼, 무너지지 않기 위해 오히려 더 환하게 웃는 쪽을 택한 것이다.<br><br>
+                            그를 다시 물가로 데려온 것은 거창한 결심이나 극적인 각성이 아니었다. 어느 날 우연히 보게 된 다큐멘터리 속, 몇 번이고 파도에 뒤집히고 모래 위에서 휩쓸리면서도 끝내 바다를 향해 나아가던 새끼 바다거북 한 마리. 로언은 뒤집히고, 밀려나고, 다시 휩쓸리면서도 끝내 멈추지 않는 그 작고도 고집스러운 등을 오래 바라보았다. 돌아갈 수 없는 것과, 그렇다고 여기서 완전히 끝낼 필요는 없다는 것을, 그는 그 장면 앞에서 처음으로 동시에 이해했는지도 몰랐다. 그래서 로언은 다시 바다 곁에 남았다. 더 이상 선수로서가 아니라, 다른 방식으로 물을 지키고 물가에 서기 위해. 여전히 완전하지는 않지만, 그럼에도 분명히 살아 있는 얼굴로. 파도에 닿을 때마다 조금씩 다시 숨을 배우는 사람처럼.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="char2" class="profile-content">
+            <div class="profile-layout">
+                
+                <div class="left-column">
+                    <div class="profile-image">
+                        <img src="HA.webp" alt="헤일 연" class="main-char" onclick="openModal(this.src)">
+                        <div class="profile-sticker sticker-br"><img src="H2.png" alt="헤일 소형 스티커 2"></div>
+                    </div>
+                    
+                    <div class="large-bottom-sticker">
+                        <img src="H1.png" alt="헤일 대형 스티커 1">
+                    </div>
+                </div>
+                
+                <div class="profile-info">
+                    <h1 class="main-name">헤일 연 (Hale Yeon)</h1>
+                    <div class="quote">"한밤의 잡음과 느린 박자, 젖은 네온의 결을 품은 사람."</div>
+                    
+                    <div class="profile-section-block">
+                        <div class="section-title">INTRODUCTION</div>
+                        <div class="transparent-box text-content">
+                            헤일 연에게 세상은 언제나 말보다 먼저 소리와 리듬으로 도착한다. 어디에도 완전히 속하지 못한 채 흔들리던 시간 끝에서, 그는 골목의 버스킹을 통해 처음 자기 호흡에 가까운 자유를 만났다. 이후 음악은 그에게 취향이 아니라 자기 자신을 증명하는 방식이 되었다. 다만 가까워질수록 타인의 박자에 스며드는 자신을 알기에, 그는 늘 다가왔다가도 조금씩 물러난다. 무심해 보여도, 누구보다 깊게 흔들리는 사람처럼.
+                        </div>
+                    </div>
+
+                    <div class="profile-section-block">
+                        <div class="section-title">FILE · INFO</div>
+                        <div class="transparent-box info-grid">
+                            <div class="info-item"><span class="info-label">AGE / MAJOR</span><span class="info-value">21세 / 의공학</span></div>
+                            <div class="info-item"><span class="info-label">POSITION</span><span class="info-value">밴드 보컬 / 기타리스트</span></div>
+                            <div class="info-item"><span class="info-label">NATIONALITY</span><span class="info-value">한국계 미국인 2세</span></div>
+                            <div class="info-item"><span class="info-label">HEIGHT / WEIGHT</span><span class="info-value">182cm / 76kg</span></div>
+                            <div class="info-item"><span class="info-label">EYES</span><span class="info-value">흑안</span></div>
+                            <div class="info-item"><span class="info-label">FEATURE</span><span class="info-value">흑발 장발, 흰색 브릿지</span></div>
+                            <div class="info-item"><span class="info-label">STYLE</span><span class="info-value">피어싱, 목걸이, 반지</span></div>
+                        </div>
+                    </div>
+
+                    <div class="profile-section-block">
+                        <div class="section-title">NARRATIVE</div>
+                        <div class="transparent-box text-content">
+                            헤일 연은 한국계 미국인으로 자라며, 늘 두 개의 세계가 맞물리는 경계 위에 서 있었다. 집 안에서는 한국식 예절과 뿌리를 잊지 말아야 했고, 집 밖에서는 너무 튀지 않는 아시아계 청소년으로 자연스럽게 섞여 들어가야 했다. 어느 쪽도 완전히 낯선 요구는 아니었지만, 문제는 그 어느 쪽에도 헤일 자신이 온전히 머물 자리가 없었다는 데 있었다. 그는 일찍부터 상황에 맞춰 말투를 바꾸고, 표정을 고르고, 태도를 갈아입는 법을 익혔다. 그러나 그렇게 덧입힌 얼굴들이 많아질수록, 무엇이 타인을 위해 만들어 낸 페르소나이고 무엇이 자기 자신의 진짜 목소리인지조차 서서히 흐려져 갔다.<br><br>
+                            청소년기의 어느 밤, 그는 충동적으로 집을 나왔다. 특별한 이유를 길게 설명할 수는 없었다. 다만 가슴 안쪽이 너무 답답해서, 그곳에 조금만 더 머물면 정말 숨이 막혀 버릴 것 같았다. 그리고 그날 밤, 우연히 마주친 골목의 버스킹이 그의 삶을 바꾸었다. 장비는 초라했고, 소리는 거칠었고, 리듬은 매끄럽지 못했다. 그런데도 그 불완전 소음 속에는 이상할 만큼 선명한 자유가 있었다. 누구의 기대도 아닌 자기 호흡으로 노래하고, 실수까지도 자신의 일부로 껴안는 사람들. 헤일은 그날 처음으로, 틀을 벗어난다는 것이 단지 반항이 아니라 살아남는 방식일 수도 있다는 사실을 알았다.<br><br>
+                            그 이후 음악은 취미가 아니라, 자신이 누구인지 잊지 않기 위한 감각이 되었다. 그는 모창을 했고, 기타를 익혔고, 끝내 자기 목소리로 자기 이야기를 만들어 내기 시작했다. 다만 가까워짐은 여전히 어려웠다. 친밀은 달콤했지만, 동시에 두려웠다. 누군가를 좋아할수록 자신도 모르게 그 사람의 리듬에 스며들고, 그러다 보면 어느새 자기 박자를 잃어버릴 것만 같았기 때문이다. 그래서 헤일은 다가왔다가 멀어졌고, 장난스럽게 건드렸다가도 어느 순간 조용히 끊어졌다. 무심해서가 아니라, 너무 쉽게 물드는 자신을 끝까지 경계하는 방식으로.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="char3" class="profile-content">
+            <div class="profile-layout">
+                
+                <div class="left-column">
+                    <div class="profile-image">
+                        <img src="RY.webp" alt="리스 울프" class="main-char" onclick="openModal(this.src)">
+                        <div class="profile-sticker sticker-br"><img src="RE2.png" alt="리스 소형 스티커 2"></div>
+                    </div>
+                    
+                    <div class="large-bottom-sticker">
+                        <img src="RE1.png" alt="리스 대형 스티커 1">
+                    </div>
+                </div>
+                
+                <div class="profile-info">
+                    <h1 class="main-name">리스 울프 (Reece Wolf)</h1>
+                    <div class="quote">"겨울 새벽의 공기와 얼음 같은 침묵을 두른 사람."</div>
+                    
+                    <div class="profile-section-block">
+                        <div class="section-title">INTRODUCTION</div>
+                        <div class="transparent-box text-content">
+                            리스 울프는 차갑게 식어 버린 겨울과 닮아 있다. 결과와 통제를 먼저 배운 그는 하키 안에서만 겨우 생각을 멈추고 자신을 붙들 수 있었다. 무너진 경기와 끝내 화해하지 못한 상실 이후, 하키는 더 이상 꿈이 아니라 버티기 위한 언어가 되었다. 그는 쉽게 다정해지지 않지만, 한 번 신경 쓴 것은 끝까지 놓지 않는다. 차갑고 단단한 얼굴 아래, 오래된 죄책감과 상처를 조용히 눌러 둔 채로.
+                        </div>
+                    </div>
+
+                    <div class="profile-section-block">
+                        <div class="section-title">FILE · INFO</div>
+                        <div class="transparent-box info-grid">
+                            <div class="info-item"><span class="info-label">AGE / MAJOR</span><span class="info-value">23세 / 스포츠 매니지먼트</span></div>
+                            <div class="info-item"><span class="info-label">JOB</span><span class="info-value">하키 선수</span></div>
+                            <div class="info-item"><span class="info-label">HEIGHT / WEIGHT</span><span class="info-value">186cm / 84kg</span></div>
+                            <div class="info-item"><span class="info-label">EYES</span><span class="info-value">벽안</span></div>
+                            <div class="info-item"><span class="info-label">FEATURE</span><span class="info-value">애쉬 화이트 헤어</span></div>
+                            <div class="info-item"><span class="info-label">VIBE</span><span class="info-value">차갑고 묵직한 인상</span></div>
+                        </div>
+                    </div>
+
+                    <div class="profile-section-block">
+                        <div class="section-title">NARRATIVE</div>
+                        <div class="transparent-box text-content">
+                            리스 울프는 기대가 얼마나 쉽게 사랑을 닮은 폭력이 될 수 있는지, 아주 어린 시절부터 배워 온 사람이다. 그의 아버지는 한때 운동선수였으나 끝내 뚜렷한 성취를 남기지 못했고, 이후 코치로서도 번번이 뜻을 이루지 못했다. 넉넉하지 않은 집안에서 부모가 걸 수 있는 거의 전부는 두 아들의 운동뿐이었다. 그것은 희망이었고, 동시에 퇴로를 지워 버리는 압박이었다. 형은 기대에 가까운 아이였고, 리스는 늘 그 옆에서 비교되는 쪽에 섰다. 더 잘해야 했고, 더 버텨야 했으며, 무엇보다 부모가 쏟아부은 시간과 돈이 헛되지 않다는 것을 증명해야 했다. “우리가 너한테 해준 게 얼만데.” 그 말은 단순한 꾸중이 아니라, 점점 그의 숨을 조여 오는 무게가 되었다.<br><br>
+                            리스는 본래부터 무딘 사람이 아니었다. 오히려 남들보다 조금 더 섬세했고, 그래서 더 쉽게 상처를 입고 더 오래 흔들렸다. 하지만 그의 집에서 섬세함은 이해받아야 할 기질이 아니라, 이겨 내야 할 나약함에 가까웠다. 그는 점점 감정을 접어 두는 법부터 배웠고, 흔들려도 티 내지 않는 법, 무너져도 끝까지 버티는 법을 먼저 익혔다. 하키는 사랑해서 시작한 꿈이 아니라, 끝내 놓칠 수 없게 되어 버린 책임이 되었다. 잘하고 있는 동안만큼은 집 안의 공기가 잠시 잠잠해졌고, 적어도 자신이 실패 그 자체는 아니라는 믿음을 붙들 수 있었으니까.<br><br>
+                            그러나 사람은 끝없이 조여지기만 해서는 버틸 수 없다. 고등학교의 중요한 경기에서, 리스는 결국 공황 속에 무너졌다. 숨은 얕아졌고, 발밑의 얼음은 낯설게 흔들렸으며, 몸은 움직여야 한다는 명령을 듣고도 제때 반응하지 못했다. 그것은 하루아침에 생긴 붕괴가 아니었다. 형과의 비교, 투자와 기대, 실망으로 가득 찬 시선, 사랑과 압박이 뒤엉킨 집 안의 공기가 오랜 시간 쌓여 만들어 낸 균열이었다. 그러나 가족은 끝내 그 균열의 이유를 들여다보지 않았다. 왜 무너졌는지는 중요하지 않았다. 왜 결과를 망쳤는지만이 남았다.<br><br>
+                            결국 리스는 모든 것을 끊어내듯 집을 떠났다. 그리고 얼마 지나지 않아 어머니는 세상을 떠났다. 미처 풀지 못한 말들과 끝내 건네지 못한 마음은 죄책감으로 굳어, 그의 안쪽 어딘가에 차갑게 남았다. 그 이후 하키는 더 이상 꿈이나 열정 같은 말로 설명되지 않았다. 그것은 버티기 위한 방식이 되었고, 생각을 멈추기 위한 장치가 되었으며, 적어도 자신이 아직 완전히 무너지지 않았다는 사실을 확인하는 유일한 언어가 되었다. 그래서 리스는 지금도 쉽게 다정해지지 않는다. 대신 먼저 움직이고, 먼저 막아서고, 먼저 감당한다. 오래전부터 그래야만 했던 사람처럼.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="imageModal" class="modal" onclick="closeModal()"><span class="close-btn">&times;</span><img class="modal-content" id="modalImg"></div>
+
+<script>
+    function showProfile(charId, event) {
+        document.querySelectorAll('.profile-content').forEach(profile => profile.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(charId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    function openModal(imageSrc) { document.getElementById("imageModal").style.display = "flex"; document.getElementById("modalImg").src = imageSrc; }
+    function closeModal() { document.getElementById("imageModal").style.display = "none"; }
+</script>
+
+</body>
+</html>
