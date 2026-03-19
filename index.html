@@ -69,7 +69,6 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
-        /* 🔥 유튜브 플레이어를 16:9 비율로 꽉 채우기 위한 설정 🔥 */
         .video-showcase {
             width: 100%; position: relative; overflow: hidden;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.5); background: #000; border-radius: 4px;
@@ -138,7 +137,6 @@
             filter: drop-shadow(0 15px 25px rgba(0,0,0,0.4));
         }
 
-        /* 님이 조절하신 커스텀 위치 유지 */
         #char1 .large-bottom-sticker img {
             width: 100%;
             transform: translate(0px, 210px);
@@ -185,6 +183,20 @@
         ::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); }
         ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.5); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.8); }
+        @media (max-width: 768px) {
+            /* 모바일에서 사진과 글씨가 위아래로 떨어지게 만듦 */
+            .left-column { flex: 0 0 100%; } 
+            
+            /* 메뉴가 잘리지 않게 스크롤 허용 */
+            .tab-menu { overflow-x: auto; white-space: nowrap; padding-bottom: 15px; } 
+            
+            /* 모바일 화면에서는 스티커가 글자를 가리지 않도록 위치 리셋 */
+            #char1 .large-bottom-sticker img, 
+            #char2 .large-bottom-sticker img, 
+            #char3 .large-bottom-sticker img { 
+                transform: translate(0px, 0px); 
+            }
+        }
     </style>
 </head>
 <body>
@@ -245,7 +257,7 @@
                     <div class="profile-section-block">
                         <div class="section-title">FILE · INFO</div>
                         <div class="transparent-box info-grid">
-                            <div class="info-item"><span class="info-label">AGE / MAJOR</span><span class="info-value">23세 / 운동역학</span></div>
+                            <div class="info-item"><span class="info-label">AGE / MAJOR</span><span class="info-value">23세 / Kinesiology</span></div>
                             <div class="info-item"><span class="info-label">JOB</span><span class="info-value">라이프가드</span></div>
                             <div class="info-item"><span class="info-label">HEIGHT / WEIGHT</span><span class="info-value">191cm / 81kg</span></div>
                             <div class="info-item"><span class="info-label">EYES</span><span class="info-value">금안</span></div>
@@ -294,7 +306,7 @@
                     <div class="profile-section-block">
                         <div class="section-title">FILE · INFO</div>
                         <div class="transparent-box info-grid">
-                            <div class="info-item"><span class="info-label">AGE / MAJOR</span><span class="info-value">21세 / 의공학</span></div>
+                            <div class="info-item"><span class="info-label">AGE / MAJOR</span><span class="info-value">21세 / Biomedical Engineering</span></div>
                             <div class="info-item"><span class="info-label">POSITION</span><span class="info-value">밴드 보컬 / 기타리스트</span></div>
                             <div class="info-item"><span class="info-label">NATIONALITY</span><span class="info-value">한국계 미국인 2세</span></div>
                             <div class="info-item"><span class="info-label">HEIGHT / WEIGHT</span><span class="info-value">182cm / 76kg</span></div>
@@ -344,7 +356,7 @@
                     <div class="profile-section-block">
                         <div class="section-title">FILE · INFO</div>
                         <div class="transparent-box info-grid">
-                            <div class="info-item"><span class="info-label">AGE / MAJOR</span><span class="info-value">23세 / 스포츠 매니지먼트</span></div>
+                            <div class="info-item"><span class="info-label">AGE / MAJOR</span><span class="info-value">23세 / Sports Management</span></div>
                             <div class="info-item"><span class="info-label">JOB</span><span class="info-value">하키 선수</span></div>
                             <div class="info-item"><span class="info-label">HEIGHT / WEIGHT</span><span class="info-value">186cm / 84kg</span></div>
                             <div class="info-item"><span class="info-label">EYES</span><span class="info-value">벽안</span></div>
